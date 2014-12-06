@@ -2,7 +2,7 @@ package com.zlzkj.core.sql;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -48,9 +48,9 @@ public class SQLBuilder{
 		setTableName(parseTableName(poClass));
 		setPojoName(poClass.getSimpleName());
 		//将类的属性变成字段名，方式是驼峰转下划线
-		Method[] methodlist=poClass.getDeclaredMethods();
-		for (Method method : methodlist) {
-			tableFields.add(Fn.underscoreName(method.getName()));
+		Field[] fieldLists = poClass.getDeclaredFields();
+		for (Field field : fieldLists) {
+			tableFields.add(Fn.underscoreName(field.getName()));
 		}
 	}
 	
@@ -281,8 +281,8 @@ public class SQLBuilder{
 	 */
 	public String parseTableName(Class<?> poClass){
 		Table table = poClass.getAnnotation(Table.class);
-		String tableName = table.name();
-		if(tableName==null){
+		String tableName = "";
+		if(table==null){ //实体类不存在table注解则自动按规则解析表名
 			InputStream in = SQLBuilder.class.getResourceAsStream("/jdbc.properties");
 			Properties p = new Properties();
 			try {
@@ -292,6 +292,8 @@ public class SQLBuilder{
 				e.printStackTrace();
 			}
 			tableName = Fn.nullToEmpty(p.getProperty("jdbc.prefix"))+Fn.underscoreName(poClass.getSimpleName());
+		}else{
+			tableName = table.name(); //实体类直接读取table注解
 		}
 		return tableName;
 	}
