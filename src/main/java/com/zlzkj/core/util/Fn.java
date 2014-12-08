@@ -9,12 +9,17 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.alibaba.fastjson.JSON;
@@ -58,6 +63,11 @@ public class Fn {
 			String[] value = paramMap.get(key);//上面key对应的value
 			map.put(key, value[value.length-1]);
 		}
+//		for (Entry<String, String[]> keys : paramMap.entrySet()) {
+//			String key = keys.getKey();
+//			String[] value = keys.getValue();
+//			map.put(key, value[value.length-1]);
+//		}
 		return map;
 	}
 	
@@ -114,6 +124,7 @@ public class Fn {
         for (int i = 0; i< propertyDescriptors.length; i++) {
             PropertyDescriptor descriptor = propertyDescriptors[i];
             String propertyName = descriptor.getName();
+            String rowKey = Fn.underscoreName(propertyName);  //驼峰转成下划线
             if (!propertyName.equals("class")) {
                 Method readMethod = descriptor.getReadMethod();
                 Object result = null;
@@ -126,13 +137,12 @@ public class Fn {
 				}catch (InvocationTargetException e3) {
 					e3.printStackTrace();
 				}
-				
 //                if (result != null) {
 //                    returnMap.put(propertyName, result);
 //                } else {
 //                    returnMap.put(propertyName, "");
 //                }
-                returnRow.put(propertyName, result);
+                returnRow.put(rowKey, result);  //下划线
             }
         }
         return returnRow;
@@ -399,5 +409,62 @@ public class Fn {
 	    } 
 	}
 	
+	/**
+	 * 获取一个字符串中的图片src 的list
+	 * @param urlString
+	 * @return
+	 */
+	public static List<String> getImgSrc(String urlString) {
+		String IMGURL_REG = "\\<img\\s+src=.*?\\s*\\/?\\>";  
+		Matcher matcher = Pattern.compile(IMGURL_REG).matcher(urlString);  
+		List<String> listImgUrl = new ArrayList<String>();  
+		List<String> listImgSrc = new ArrayList<String>();  
+		while (matcher.find()) {  
+			listImgUrl.add(matcher.group());  
+		}  
+		for (String string : listImgUrl) {//获取所有图片 标签
+			Matcher m = Pattern.compile("src\\s*=\\s*\"?(.*?)(\"|>|\\s+)").matcher(string);
+			while (m.find()) {
+				listImgSrc.add(m.group(1));
+			}
+		}
+		return listImgSrc;
+	}
+	
+	/**
+	 * 替换一个字符串中的src 在前面加上当前服务器的ip 和 端口号
+	 * @param request
+	 * @param urlString
+	 * @return
+	 */
+	public static String replaceImgSrc(HttpServletRequest request,String urlString) {
+		if (urlString!=null&&urlString!="") {
+			List<String> listImgSrc = getImgSrc(urlString);
+			for (String string : listImgSrc) {//替换所有图片src 
+				urlString = urlString.replace(string,Fn.serverUrl(request, string));
+			}
+		}
+		return urlString;
+	}
+	
+	/**
+	 * 添加服务器的ip
+	 * @param request
+	 * @param url
+	 * @return
+	 */
+	public static String serverUrl(HttpServletRequest request, String url) {
+		if (url.indexOf("http://")<0) {
+			String http = "http://" + request.getServerName() //服务器地址  
+					+ ":"   
+					+ request.getServerPort(); //端口号  
+			if (url.startsWith("/")) {
+				url= http+url;
+			}else {
+				url= http+"/"+url;
+			}
+		}
+		return url;
+	}
 	
 }
