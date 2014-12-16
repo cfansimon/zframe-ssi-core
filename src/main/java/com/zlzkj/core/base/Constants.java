@@ -12,6 +12,7 @@ public class Constants {
 	
 	//用户标识
 	public static String USER_ID = "userId";
+	public static String USER_INFO = "userInfo";
 	
 	//css/js/image等网站静态资源目录，跟spring配置文件中一致
 	public static String STATIC_PATH = "/static";
