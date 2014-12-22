@@ -30,6 +30,11 @@ public class SqlRunner {
 		return sqlMapper.getValue(createSOM(sql,params));
 	}
 	
+	
+	public Integer update(String sql,Object... params){
+		return sqlMapper.update(createSOM(sql,params));
+	}
+	
 	/**
 	 * 组装参数
 	 * @param sql

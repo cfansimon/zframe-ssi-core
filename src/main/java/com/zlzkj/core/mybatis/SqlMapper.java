@@ -3,6 +3,7 @@ package com.zlzkj.core.mybatis;
 import java.util.List;
 
 import org.apache.ibatis.annotations.SelectProvider;
+import org.apache.ibatis.annotations.UpdateProvider;
 
 import com.zlzkj.core.base.SoMap;
 import com.zlzkj.core.sql.Row;
@@ -45,4 +46,8 @@ public interface SqlMapper {
 	 */
 	@SelectProvider(type = SqlMapperProvider.class,method = "select")
 	public Object getValue(SoMap somap);
+	
+	
+	@UpdateProvider(type = SqlMapperProvider.class,method = "update")
+	public Integer update(SoMap somap);
 }
