@@ -29,15 +29,27 @@ public class SqlRunner {
 	public Object getValue(String sql,Object... params){
 		return sqlMapper.getValue(createSOM(sql,params));
 	}
-	
+	/**
+	 * insert方法
+	 * @param somap
+	 * @return
+	 */
 	public Integer insert(String sql,Object... params){
 		return sqlMapper.insert(createSOM(sql,params));
 	}
-	
+	/**
+	 * update方法
+	 * @param somap
+	 * @return
+	 */
 	public Integer update(String sql,Object... params){
 		return sqlMapper.update(createSOM(sql,params));
 	}
-	
+	/**
+	 * delete方法
+	 * @param somap
+	 * @return
+	 */
 	public Integer delete(String sql,Object... params){
 		return sqlMapper.delete(createSOM(sql,params));
 	}

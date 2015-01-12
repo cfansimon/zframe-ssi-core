@@ -14,7 +14,7 @@
 	<!-- 模板继承标签 -->
 	<tag>
 		<name>block</name>
-		<tag-class>com.zlzkj.core.tags.BlockTag</tag-class>
+		<tag-class>com.zlzkj.core.tag.BlockTag</tag-class>
 		<body-content>JSP</body-content>
 		<attribute>
 	        <name>name</name>
@@ -25,7 +25,7 @@
 	</tag>
 	<tag>
 		<name>override</name>
-		<tag-class>com.zlzkj.core.tags.OverrideTag</tag-class>
+		<tag-class>com.zlzkj.core.tag.OverrideTag</tag-class>
 		<body-content>JSP</body-content>
 		<attribute>
 	        <name>name</name>
