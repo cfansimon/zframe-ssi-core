@@ -13,8 +13,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import sun.tools.tree.NewArrayExpression;
-
 import com.zlzkj.core.util.Fn;
 
 /**
@@ -43,7 +41,7 @@ public class SQLBuilder{
 	private String groupString;
 	private List<String> tableFields = new ArrayList<String>();
 	private String lastSql;
-	
+
 	private static Logger logger = Logger.getLogger(SQLBuilder.class);
 
 	private SQLBuilder(){}
@@ -101,7 +99,7 @@ public class SQLBuilder{
 	 * @param logicType 条件结合方式,可选值AND或OR
 	 * @return
 	 */
-	public SQLBuilder where(Row where,String... logicType){
+	public SQLBuilder where(Map<String, Object> where,String... logicType){
 		if(where != null && !where.isEmpty()){
 			if(logicType.length==0){
 				logicType = new String[]{"AND"};
@@ -267,9 +265,9 @@ public class SQLBuilder{
 		logger.info(sql);
 		return sql;
 	}
-	
+
 	/**
-	 * 组装update语句,现将要更新的字段组装成一个Row (map) 
+	 * 组装update语句,现将要更新的字段组装成一个Row
 	 * 建议使用Fn 中转化实体为Row的方法
 	 * @param id
 	 * @param entityRow
@@ -300,7 +298,7 @@ public class SQLBuilder{
 	 * @param logicType 条件结合类型,AND或OR
 	 * @return 条件字符串: key1 = value1 AND key
 	 */
-	public String parseWhereMap(Row whereMap,String logicType){
+	public String parseWhereMap(Map<String, Object> whereMap,String logicType){
 		logicType = logicType.toLowerCase();
 		if(!(logicType.equals("and") || logicType.equals("or"))){
 			logicType = "and";
@@ -320,23 +318,6 @@ public class SQLBuilder{
 				}
 			}
 		}
-		//		Set<Entry<String, Object>> keys = whereMap.entrySet();
-		//		for (Entry<String, Object> entry : keys) {
-		//			String k = entry.getKey();
-		//			Object v = entry.getValue();
-		//			if(k.equals("_string")){ //允许混合直接字符串查询
-		//				whereString += v.toString() + " " + logicType + " ";
-		//			}else{
-		//				if(v.getClass().isArray() && ((String[])v).length == 2){ //whereMap.put("name",new String[]{"like","%Simon%"})
-		//					whereString += k + " " + ((String[])v)[0] 
-		//								+ " \'" + ((String[])v)[1] 
-		//								+ "\' " + logicType + " ";
-		//				}else{
-		//					whereString += k + "=\'" + v.toString() 
-		//								+ "\' " + logicType + " ";
-		//				}
-		//			}
-		//		}
 		whereString = whereString.trim();
 		whereString = Fn.rtrim(whereString,logicType);
 		return whereString;

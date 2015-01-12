@@ -14,6 +14,9 @@ public class SqlMapperProvider {
 	public String select(SoMap somap) {
         return somap.get("sql").toString();
     }  
+	public String update(SoMap somap) {
+		return somap.get("sql").toString();
+	}  
       
    
     
