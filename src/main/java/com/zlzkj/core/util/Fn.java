@@ -448,6 +448,34 @@ public class Fn {
 	}
 	
 	/**
+	 * 缩放图片
+	 * @param imageUrl 原始图片的网址
+	 * @param resizeString 缩放尺寸 100x200
+	 * @return
+	 */
+	public static String resizeImage(String imageUrl,String resizeString){
+		if(!UploadUtils.isImageResize()){
+			return imageUrl;
+		}
+		String extName = imageUrl.substring(imageUrl.lastIndexOf(".")).toLowerCase();
+		return imageUrl+"_r"+resizeString+extName;
+	}
+	
+	/**
+	 * 裁剪图片
+	 * @param imageUrl 原始图片的网址
+	 * @param cropString 裁剪尺寸 100x200
+	 * @return
+	 */
+	public static String cropImage(String imageUrl,String cropString){
+		if(!UploadUtils.isImageResize()){
+			return imageUrl;
+		}
+		String extName = imageUrl.substring(imageUrl.lastIndexOf(".")).toLowerCase();
+		return imageUrl+"_c"+cropString+extName;
+	}
+	
+	/**
 	 * 添加服务器的ip
 	 * @param request
 	 * @param url
