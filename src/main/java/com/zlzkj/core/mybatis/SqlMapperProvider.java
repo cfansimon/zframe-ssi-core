@@ -17,6 +17,12 @@ public class SqlMapperProvider {
 	public String update(SoMap somap) {
 		return somap.get("sql").toString();
 	}  
+	public String insert(SoMap somap) {
+		return somap.get("sql").toString();
+	}  
+	public String delete(SoMap somap) {
+		return somap.get("sql").toString();
+	}  
       
    
     

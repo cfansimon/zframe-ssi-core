@@ -2,6 +2,9 @@ package com.zlzkj.core.mybatis;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.DeleteProvider;
+import org.apache.ibatis.annotations.InsertProvider;
+import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.SelectProvider;
 import org.apache.ibatis.annotations.UpdateProvider;
 
@@ -47,7 +50,28 @@ public interface SqlMapper {
 	@SelectProvider(type = SqlMapperProvider.class,method = "select")
 	public Object getValue(SoMap somap);
 	
+	/**
+	 * insert方法
+	 * @param somap
+	 * @return
+	 */
+	@InsertProvider(type = SqlMapperProvider.class,method = "insert")
+    @Options(useGeneratedKeys = true)
+	public Integer insert(SoMap somap);
 	
+	/**
+	 * update方法
+	 * @param somap
+	 * @return
+	 */
 	@UpdateProvider(type = SqlMapperProvider.class,method = "update")
 	public Integer update(SoMap somap);
+	
+	/**
+	 * delete方法
+	 * @param somap
+	 * @return
+	 */
+	@DeleteProvider(type = SqlMapperProvider.class,method = "delete")
+	public Integer delete(SoMap somap);
 }

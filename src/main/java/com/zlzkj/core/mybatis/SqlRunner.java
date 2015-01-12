@@ -30,9 +30,16 @@ public class SqlRunner {
 		return sqlMapper.getValue(createSOM(sql,params));
 	}
 	
+	public Integer insert(String sql,Object... params){
+		return sqlMapper.insert(createSOM(sql,params));
+	}
 	
 	public Integer update(String sql,Object... params){
 		return sqlMapper.update(createSOM(sql,params));
+	}
+	
+	public Integer delete(String sql,Object... params){
+		return sqlMapper.delete(createSOM(sql,params));
 	}
 	
 	/**
