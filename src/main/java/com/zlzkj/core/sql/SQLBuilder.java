@@ -267,8 +267,8 @@ public class SQLBuilder{
 	}
 
 	/**
-	 * 组装update语句,现将要更新的字段组装成一个Row
-	 * 建议使用Fn 中转化实体为Row的方法
+	 * 组装update语句,先把要更新的字段组装成一个Row
+	 * 建议使用Fn中转化实体为Row的方法
 	 * @param id
 	 * @param entityRow
 	 * @return
