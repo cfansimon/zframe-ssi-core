@@ -185,7 +185,8 @@ public class Fn {
             PropertyDescriptor descriptor = propertyDescriptors[i];
             String propertyName = descriptor.getName();
             
-            String rowKey = Fn.underscoreName(propertyName); //驼峰转成下划线
+            String rowKey = propertyName; //驼峰转成下划线
+//            String rowKey = Fn.underscoreName(propertyName); //驼峰转成下划线
             if (row.containsKey(rowKey)) {
                 // 下面一句可以 try 起来，这样当一个属性赋值失败的时候就不会影响其他属性赋值。
                 Object value = row.get(rowKey); 
@@ -195,6 +196,15 @@ public class Fn {
 
                 try {
                 	Method method = descriptor.getWriteMethod();
+                	//修复MyBatis返回类型跟数据库的不匹配
+                	String fieldType =method.getParameterTypes()[0].getSimpleName();
+                	if(fieldType.equals("Integer")){
+                		args[0] = Integer.valueOf(args[0].toString());
+                	}else if(fieldType.equals("Short")){
+                		args[0] = Short.valueOf(args[0].toString());
+                	}else if(fieldType.equals("Byte")){
+                		args[0] = Byte.valueOf(args[0].toString());
+                	}
                 	method.invoke(obj, args);
 				} catch (IllegalArgumentException e) {
 					e.printStackTrace();

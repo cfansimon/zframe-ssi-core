@@ -30,7 +30,11 @@ public class Row extends HashMap<String, Object>{
 	 * @return
 	 */
 	public Integer getInt(Object key){
-		return Integer.valueOf(get(key).toString());
+		if (get(key)!=null) {
+			return Integer.valueOf(get(key).toString());
+		}else {
+			return null;
+		}
 	}
 	
 	/**
@@ -39,7 +43,12 @@ public class Row extends HashMap<String, Object>{
 	 * @return
 	 */
 	public Long getLong(Object key){
-		return Long.valueOf(get(key).toString());
+		if (get(key)!=null) {
+			return Long.valueOf(get(key).toString());
+		}else {
+			return null;
+		}
+		
 	}
 	
 	/**
@@ -48,7 +57,11 @@ public class Row extends HashMap<String, Object>{
 	 * @return
 	 */
 	public Short getShort(Object key){
-		return Short.valueOf(get(key).toString());
+		if (get(key)!=null) {
+			return Short.valueOf(get(key).toString());
+		}else {
+			return null;
+		}
 	}
 	
 	/**
@@ -57,7 +70,12 @@ public class Row extends HashMap<String, Object>{
 	 * @return
 	 */
 	public Byte getByte(Object key){
-		return Byte.valueOf(get(key).toString());
+		if (get(key)!=null) {
+			return Byte.valueOf(get(key).toString());
+		}else {
+			return null;
+		}
+		
 	}
 	
 	/**
@@ -66,7 +84,11 @@ public class Row extends HashMap<String, Object>{
 	 * @return
 	 */
 	public Float getFloat(Object key){
-		return Float.valueOf(get(key).toString());
+		if (get(key)!=null) {
+			return Float.valueOf(get(key).toString());
+		}else {
+			return null;
+		}
 	}
 	
 	/**
@@ -75,7 +97,11 @@ public class Row extends HashMap<String, Object>{
 	 * @return
 	 */
 	public Double getDouble(Object key){
-		return Double.valueOf(get(key).toString());
+		if (get(key)!=null) {
+			return Double.valueOf(get(key).toString());
+		}else {
+			return null;
+		}
 	}
 	
 	/**
@@ -84,7 +110,11 @@ public class Row extends HashMap<String, Object>{
 	 * @return
 	 */
 	public String getString(Object key){
-		return get(key).toString();
+		if (get(key)!=null) {
+			return String.valueOf(get(key).toString());
+		}else {
+			return null;
+		}
 	}
 	
 	
