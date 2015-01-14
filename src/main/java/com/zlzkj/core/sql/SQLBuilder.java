@@ -7,9 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -262,32 +260,6 @@ public class SQLBuilder{
 		//重置查询条件
 		resetQuery();
 		this.setLastSql(sql);  //记录最后一条sql语句
-		logger.info(sql);
-		return sql;
-	}
-
-	/**
-	 * 组装update语句,先把要更新的字段组装成一个Row
-	 * 建议使用Fn中转化实体为Row的方法
-	 * @param id
-	 * @param entityRow
-	 * @return
-	 */
-	public String updateSql(Integer id,Row entityRow) {
-		String sql = "update "+getTableName()+" set ";
-		String setString = "";
-		Set<Entry<String, Object>> keys = entityRow.entrySet();
-		for (Entry<String, Object> entry : keys) {
-			String key = entry.getKey();
-			Object value = entry.getValue();
-			if(value!=null && !value.equals("")){
-				setString += key + "=\'" + value.toString() + "\'" + ",";
-			}
-		}
-		setString = setString.substring(0, setString.length()-1); //删除最后的逗号
-		sql += setString + " where id=\'" + id + "\'";
-		resetQuery();
-		this.setLastSql(sql);
 		logger.info(sql);
 		return sql;
 	}

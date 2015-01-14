@@ -342,7 +342,7 @@ public class Sql{
 		}
 		updateString = cutString(updateString); //删除最后的逗号
 		String sql = "UPDATE "+getTableName()+" SET ";
-		sql+= updateString;
+		sql+= updateString+" ";
 		sql+= nullToBlank(getWhereString());
 		resetQuery();
 		logger.info(sql);
@@ -353,7 +353,7 @@ public class Sql{
 	 * @return
 	 */
 	public String deleteSql() {
-		String sql = "DELETE FROM "+getTableName();
+		String sql = "DELETE FROM "+getTableName()+" ";
 		sql+= nullToBlank(getWhereString());
 		resetQuery();
 		logger.info(sql);
