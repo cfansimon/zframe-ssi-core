@@ -56,7 +56,6 @@ public interface SqlMapper {
 	 * @return
 	 */
 	@InsertProvider(type = SqlMapperProvider.class,method = "insert")
-	@Options(useGeneratedKeys = true, keyProperty = "id")
 	public Integer insert(SoMap somap);
 	
 	/**
