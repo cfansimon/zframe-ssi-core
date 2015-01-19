@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
@@ -239,7 +241,98 @@ public class SQLBuilder{
 		setJoinString(nullToBlank(getJoinString()) + sql); //拼接多个join
 		return this;
 	}
-
+	/**
+	 * 组装insert语句,也可以用于更新,但id字段必须带有值
+	 * @return
+	 */
+	public String insertSql(Row entityRow) {
+		String fieldString = "";
+		String valuesString = "(";
+		Set<Entry<String, Object>> keys = entityRow.entrySet();
+		for (Entry<String, Object> entry : keys) {
+			String key = entry.getKey();
+			fieldString += key+",";	
+			Object value = entry.getValue();
+			if (value!=null) {
+				valuesString += "\'" + value + "\'" + ",";
+			}else {
+				valuesString += value + ",";
+			}
+		}
+		fieldString = cutString(fieldString); 
+		valuesString = cutString(valuesString)+")";
+		String sql = "INSERT INTO "+getTableName()+" ("+fieldString+")";
+		sql+= " VALUES "+valuesString+"";
+		logger.info(sql);
+		return sql;
+	}
+	/**
+	 * 组装批量insert语句,也可以用于更新,但id字段必须带有值 
+	 * @return
+	 */
+	public String insertSql(List<Row> entityList) {
+		String fieldString = "";
+		String valuesString = ""; 
+		Row entityRow =entityList.get(0);
+		Set<String> keysSet = entityRow.keySet();
+		for (String key	: keysSet) {
+			fieldString+= key+",";	
+		}
+		fieldString = cutString(fieldString); //删除最后的逗号
+		for (Map<String, Object> map : entityList) {
+			String val ="(";
+			for (String key	: keysSet) {
+				Object value = map.get(key);//value
+				if (value!=null) {
+					val += "\'" + value + "\'" + ",";
+				}else {
+					val += value + ",";
+				}
+			}
+			val = cutString(val)+")";
+			valuesString += val+",";
+		}
+		valuesString = cutString(valuesString); //删除最后的逗号
+		String sql = "INSERT INTO "+getTableName()+" ("+fieldString+")";
+		sql+= " VALUES "+valuesString+"";
+		logger.info(sql);
+		return sql;
+	}
+	/**
+	 * 组装update语句
+	 * 设置更新的id和字段,先将要更新的字段组装成一个Row,需要和where连用确保更新正确
+	 * 建议使用Fn 中转化实体为Row的方法
+	 * @return
+	 */
+	public String updateSql(Row entityRow) {
+		String updateString = "";
+		Set<Entry<String, Object>> keys = entityRow.entrySet();
+		for (Entry<String, Object> entry : keys) {
+			String key = entry.getKey();
+			Object value = entry.getValue();
+			if(value!=null && !value.equals("")){
+				updateString += key + "=\'" + value.toString() + "\'" + ",";
+			}
+		}
+		updateString = cutString(updateString); //删除最后的逗号
+		String sql = "UPDATE "+getTableName()+" SET ";
+		sql+= updateString+" ";
+		sql+= nullToBlank(getWhereString());
+		resetQuery();
+		logger.info(sql);
+		return sql;
+	}
+	/**
+	 * 组装delete语句,和where连用可以实现批量删除
+	 * @return
+	 */
+	public String deleteSql() {
+		String sql = "DELETE FROM "+getTableName()+" ";
+		sql+= nullToBlank(getWhereString());
+		resetQuery();
+		logger.info(sql);
+		return sql;
+	}
 	/**
 	 * 组装select的sql语句
 	 * @return
@@ -262,6 +355,10 @@ public class SQLBuilder{
 		this.setLastSql(sql);  //记录最后一条sql语句
 		logger.info(sql);
 		return sql;
+	}
+	public String cutString(String str){
+		str = str.substring(0,str.length()-1); 
+		return str;
 	}
 
 	/**
