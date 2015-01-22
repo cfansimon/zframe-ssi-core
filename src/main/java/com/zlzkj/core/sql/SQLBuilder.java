@@ -317,7 +317,7 @@ public class SQLBuilder{
 		updateString = cutString(updateString); //删除最后的逗号
 		String sql = "UPDATE "+getTableName()+" SET ";
 		sql+= updateString+" ";
-		sql+= nullToBlank(getWhereString());
+//		sql+= nullToBlank(getWhereString());
 		resetQuery();
 		logger.info(sql);
 		return sql;

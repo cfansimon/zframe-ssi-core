@@ -18,9 +18,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.zlzkj.core.util.Fn;
+import com.zlzkj.core.util.SpringContextUtil;
 
 /**
  * 文件上传工具类 - 支持断点续传和flash控件上传
@@ -29,44 +33,74 @@ import org.springframework.web.multipart.MultipartFile;
  *
  */
 public class UploadUtils {
-	
+
 	private static final String CONFIG_FILE = "upload.properties";
-	
+
 	/** when the has increased to 10kb, then flush it to the hard-disk. */
 	private static final int BUFFER_LENGTH = 10240;
-	
+
 	private static final String MSG_RESUME_ERROR = "断点续传校验失败，请重新选择上传文件，或尝试重命名文件后再次上传";
 	private static final String MSG_CREATE_ERROR = "临时文件创建失败，请检查保存目录权限";
-	
+
 	private static Logger logger = Logger.getLogger(UploadUtils.class);
-	
-	
+
+
 	/**
 	 * 获取tomcat的本地绝对路径,末位无斜杠
 	 * @return
 	 */
 	public static String getWebAppsAbsPath(){
-	    String path = UploadUtils.class.getClassLoader().getResource("").getPath();
-	    String contextPath = SpringContextUtil.getContextPath();
-	    //删除末尾的斜杠
-	    if(contextPath.endsWith(File.separator)){
-	    	contextPath = contextPath.substring(0,contextPath.length()-1);
-	    }
-	    //添加首位的斜杠
-	    if(!contextPath.startsWith(File.separator)){
-	    	contextPath = File.separator+contextPath;
-	    }
-	    String excludeString = File.separator+"WEB-INF"+File.separator+"classes"+File.separator;
-	    path = path.substring(0, path.length() - excludeString.length());
-	    //Maven的run的情况下不包含contextPath
-	    //Maven run取到的值示例: /Users/Simon/Workspaces/MyEclipse%20Professional/shdyj-admin/src/main/webapp/WEB-INF/classes/
-	    if(path.endsWith(contextPath)){
-	    	path = path.substring(0, path.length() - contextPath.length());
-	    }
-	    return path;
+		String OS = System.getProperty("os.name").toLowerCase();//获取系统名称
+		String path = UploadUtils.class.getClassLoader().getResource("").getPath();
+		String contextPath = SpringContextUtil.getContextPath();
+		//删除末尾的斜杠
+		if(contextPath.endsWith(File.separator)){
+			contextPath = contextPath.substring(0,contextPath.length()-1);
+		}
+		//添加首位的斜杠
+		if(!contextPath.startsWith(File.separator) && OS.indexOf("win") < 0){
+			contextPath = File.separator+contextPath;
+		}
+		String excludeString = File.separator+"WEB-INF"+File.separator+"classes"+File.separator;
+		path = path.substring(0, path.length() - excludeString.length());
+		//Maven的run的情况下不包含contextPath
+		//Maven run取到的值示例: /Users/Simon/Workspaces/MyEclipse%20Professional/shdyj-admin/src/main/webapp/WEB-INF/classes/
+		if(path.endsWith(contextPath)){
+			path = path.substring(0, path.length() - contextPath.length());
+		}
+		if(OS.indexOf("win") >= 0 && path.startsWith("/")){ //在win系统下先把开头的 / 去掉
+			path = path.substring(1);
+		}
+		return path;
+	}
+	/**
+	 * 根据系统不同转换路径格式
+	 * @param path
+	 * @return
+	 */
+	public static String pathByOs(String path){
+		String OS = System.getProperty("os.name").toLowerCase();//获取系统名称
+		if(OS.indexOf("win") >= 0){
+			path = path.replace("/", "\\");
+		}
+		return path;
 	}
 	
+	public static String serverUrl(HttpServletRequest request, String url) {
+		if (url.indexOf("http://")<0) {
+			String http = "http://" + request.getServerName() //服务器地址  
+					+ ":"   
+					+ request.getServerPort(); //端口号  
+			if (url.startsWith("/")) {
+				url= http+url;
+			}else {
+				url= http+"/"+url;
+			}
+		}
+		return url;
+	}
 	
+
 	/**
 	 * 获取配置文件的值
 	 * @param key
@@ -84,7 +118,7 @@ public class UploadUtils {
 		}
 		return properties.getProperty(key);
 	}
-	
+
 	//------快捷获取配置值-START-------
 	/**
 	 * 获取文件存储目录根路径,末位不含斜杠
@@ -92,13 +126,14 @@ public class UploadUtils {
 	 */
 	public static String getFileRepository() {
 		String path = getConfig("FILE_REPOSITORY");
-		
+
 		if (path == null || path.isEmpty()){
 			throw new NullPointerException("can not find value of FILE_SAVE_PATH in "+CONFIG_FILE);
 		}
 		if(getPathType().equals("relative")){ //采用相对路径
 			path = getWebAppsAbsPath() + File.separator + path;
 		}
+		path = path.replace("%20", " ");
 		File dirFile = new File(path);
 		if (!(dirFile.exists() && dirFile.isDirectory())) {
 			//不存在则尝试自动创建
@@ -106,10 +141,10 @@ public class UploadUtils {
 				throw new NullPointerException(path+" folder does not exist");
 			}
 		}
-		path = path.replace("%20", " ");
-		return path;
+		
+		return pathByOs(path);
 	}
-	
+
 	/**
 	 * 获取保存路径类型
 	 * @return relative or absolute
@@ -121,12 +156,17 @@ public class UploadUtils {
 		}
 		return type;
 	}
-	
+
 	/**
-	 * 获取文件服务器url,"http://"开头,末位不含斜杠
+	 * 获取文件服务器url
+	 * 绝对路径返回"http://"开头,末位不含斜杠；
+	 * 相对路径返回FILE_REPOSITORY
 	 * @return
 	 */
 	public static String getFileServer() {
+		if(UploadUtils.getPathType().equals("relative")){
+			return "/"+Fn.ltrim(UploadUtils.getConfig("FILE_REPOSITORY"),"/");
+		}
 		String fileServer = getConfig("FILE_SERVER");
 		if(fileServer.endsWith("/")){
 			fileServer = fileServer.substring(0,fileServer.length()-1);
@@ -136,39 +176,39 @@ public class UploadUtils {
 		}
 		return fileServer;
 	}
-	
+
 	public static String getCrossServer() {
 		return getConfig("CROSS_SERVER");
 	}
-	
+
 	public static String getCrossOrigins() {
 		return getConfig("CROSS_ORIGIN");
 	}
-	
+
 	public static boolean isCrossed() {
 		return Boolean.parseBoolean(getConfig("IS_CROSS"));
 	}
-	
+
 	public static boolean isImageResize() {
 		return Boolean.parseBoolean(getConfig("IMAGE_RESIZE"));
 	}
-	
+
 	public static List<String> getList(String key){
 		String extString = getConfig(key);
 		List<String> list = Arrays.asList(extString.split(","));
 		return list;
 	}
-	
+
 	public static List<String> getVideoExtList(){
 		return getList("VIDEO_EXT");
 	}
 	public static List<String> getImageExtList(){
 		return getList("IMAGE_EXT");
 	}
-	
-	
+
+
 	//------快捷获取配置值-END--------
-	
+
 	/**
 	 * 生成Token,即临时文件名称
 	 * ;正常情况:TEMP_ 文件最后修改时间 + "_" + size的值 + 原扩展名
@@ -194,7 +234,7 @@ public class UploadUtils {
 		token += "_" + size.trim() + getExtName(name);
 		return token;
 	}
-	
+
 	/**
 	 * 获取Range参数
 	 * @param range
@@ -214,7 +254,7 @@ public class UploadUtils {
 			Long from = Long.parseLong(fromTo[0]);
 			Long to = Long.parseLong(fromTo[1]);
 			Long size = Long.parseLong(rangeSize[1]);
-			
+
 			map.put("from", from);
 			map.put("to",to);
 			map.put("size",size);
@@ -223,7 +263,7 @@ public class UploadUtils {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * 获取需要断点续传的不完整的临时文件
 	 * ;使用前请先验证token
@@ -242,7 +282,7 @@ public class UploadUtils {
 		}
 		return f;
 	}
-	
+
 	/**
 	 * 将上传的文件流保存成文件，直接传统上传和HTML5断点续传两种方式保存
 	 * @param in
@@ -261,19 +301,19 @@ public class UploadUtils {
 		String errorMsg = ""; //status=-1时的错误信息
 		long uploadedSize = 0; //已上传的文件大小
 		String saveName = ""; //status=2时的文件保存名，不含路径
-		
+
 		Map<String,Long> range = UploadUtils.parseRange(rangeHeaderString);
-		
+
 		try {
-			
+
 			File f = UploadUtils.getTokenedFile(token);
 			//如果是HTML5断点方式上传，则文件的现有大小要跟续传过来的开始位置大小进行匹配
 			//如果是传统上传，则不需要验证
 			if(range == null || (range != null && f.length()==range.get("from"))){ 
-				
+
 				InputStream content = in;
 				OutputStream out = null;
-				
+
 				try {
 					//保存临时文件
 					if(range == null){
@@ -288,7 +328,7 @@ public class UploadUtils {
 					}
 					uploadedSize = f.length(); //本次分片上传完后的文件大小
 					status = 1; //本次分片上传完成
-					
+
 				} catch (IOException e) {
 					//页面手动刷新可能导致输入流可能被强制中断
 					status = -1;
@@ -299,7 +339,7 @@ public class UploadUtils {
 					UploadUtils.close(out);
 					UploadUtils.close(content);
 				}
-				
+
 				//先判断本次输入流有无异常退出
 				//传统上传则直接保存
 				//HTML5整个文件的所有分片上传完成
@@ -309,35 +349,35 @@ public class UploadUtils {
 					status = 2;
 					logger.warn("Token: `" + token + "`, newFullName: `" + newFullName + "`");
 				}
-				
+
 			}else if(range != null && f.length()!=range.get("from")){
 				status = -1;
 				errorMsg = MSG_RESUME_ERROR;
 			}
-			
+
 		} catch (IOException e1) {
 			status = -1;
 			errorMsg = MSG_CREATE_ERROR;
 			e1.printStackTrace();
 		}
-		
+
 		Map<String,Object> map= new HashMap<String,Object>();
 		map.put("status", status);
 		map.put("errorMsg", errorMsg);
 		map.put("uploadedSize", uploadedSize);
 		map.put("saveName", saveName);
-		
+
 		return map;
-		
+
 	}
-	
+
 	public static Map<String,Object> saveMultipartFile(MultipartFile file,String... tokens){
-		
+
 		int status = 0;  //-1:错误，0:初始状态，2:文件已完成传输并重命名为新文件名
 		String errorMsg = ""; //status=-1时的错误信息
 		long uploadedSize = 0; //上传的文件大小
 		String saveName = ""; //status=2时的文件保存名，不含路径
-		
+
 		if(!file.isEmpty()){
 			InputStream in = null;
 			OutputStream out = null;
@@ -348,7 +388,7 @@ public class UploadUtils {
 				token = generateToken(file.getOriginalFilename(), String.valueOf(file.getSize()), null);
 			}
 			File f = null;
-			
+
 			try {
 				in = file.getInputStream();
 				f = UploadUtils.getTokenedFile(token);
@@ -370,7 +410,7 @@ public class UploadUtils {
 				UploadUtils.close(in);
 				UploadUtils.close(out);
 			}
-			
+
 			if(status==1){ //上传成功
 				saveName = UploadUtils.generateNewSaveNameByToken(token);
 				saveFile(f,saveName);
@@ -378,20 +418,21 @@ public class UploadUtils {
 				logger.warn("Token: `" + token + "`, NewName: `" + saveName + "`");
 			}
 		}else{
+			status=-2;
 			errorMsg = "上传文件为空";
 		}
-		
+
 		Map<String,Object> map= new HashMap<String,Object>();
 		map.put("status", status);
 		map.put("errorMsg", errorMsg);
 		map.put("uploadedSize", uploadedSize);
 		map.put("saveName", saveName);
-		
+
 		return map;
-		
+
 	}
-	
-	
+
+
 	/**
 	 * 把上传完成的临时文件，保存到相应的目录，
 	 * 返回文件全路径
@@ -400,11 +441,11 @@ public class UploadUtils {
 	 * @return
 	 */
 	public static String saveFile(File file,String newSaveName){
-		
+
 		// TODO 获取扩展名,考虑采用扩展名建文件夹分类保存
-		
+
 		String fullFileName = getFullSavePath(newSaveName) + File.separator + newSaveName;
-		
+
 		//若文件存在则重新生成
 		if(file.exists()){
 			File dst = new File(fullFileName);
@@ -412,7 +453,7 @@ public class UploadUtils {
 		}
 		return fullFileName;
 	}
-	
+
 	/**
 	 * 根据Token生成新的文件保存名，不含路径 - 采用闲乐图片命名法
 	 * @param token
@@ -435,25 +476,25 @@ public class UploadUtils {
 				logger.error("Error:"+e.getLocalizedMessage());
 				e.printStackTrace();
 			}
-			
+
 		}else{
 			//直接截取toke的后缀(文件大小.扩展名)
 			fileNameSuffix = token.substring(token.lastIndexOf("_")+1);
 		}
-		
+
 		//根据上传完成的系统时间生成新的文件名
 		String fileName = n2s(getNowTimestamp()) + "_!!" + fileNameSuffix;
-		
+
 		// TODO 验证生成的文件名是否重复
 		//若文件存在则重新生成
-//		if(file.exists()){
-//			generateNewSaveNameByToken(token);
-//		}
+		//		if(file.exists()){
+		//			generateNewSaveNameByToken(token);
+		//		}
 		return fileName;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * 获取文件保存具体路径：文件仓库跟目录/文件种类目录(如video、image)/8位年月日
 	 * ;文件种类目录根据文件扩展名自动创建
@@ -481,7 +522,7 @@ public class UploadUtils {
 		logger.warn("[getFullSavePath]"+fullSavePath);
 		return fullSavePath;
 	}
-	
+
 	/**
 	 * 根据文件名返回文件种类
 	 * ;目前就判断视频、图片和其他类型
@@ -500,7 +541,7 @@ public class UploadUtils {
 		}
 		return fileKind;
 	}
-	
+
 	/**
 	 * 根据文件名解析出文件的weburl
 	 * @param saveName 文件名
@@ -519,7 +560,7 @@ public class UploadUtils {
 		String ymd = sdf.format(new Date(timestamp*1000L));
 		//获取文件种类
 		String fileKind = parseFileKind(saveName);
-		
+
 		String fileUrl = fileKind + "/" + ymd + "/" + saveName;
 		//如果是相对路径模式，则作为web路径加在文件路径中
 		if(getPathType().equals("relative")){ //采用相对路径
@@ -536,10 +577,10 @@ public class UploadUtils {
 		}else{ //绝对路径
 			fileUrl = getFileServer() + "/" + fileUrl;
 		}
-		
+
 		return fileUrl;
 	}
-	
+
 	/**
 	 * 根据文件名解析出文件URL
 	 * @param saveName
@@ -554,8 +595,8 @@ public class UploadUtils {
 			return parseFileUrl(saveName);
 		}
 	}
-	
-	
+
+
 	/**
 	 * 把10位时间戳数字转成字符串(混合大小写)
 	 * @param num
@@ -565,18 +606,18 @@ public class UploadUtils {
 		String str = "";
 		char _char;
 		String numStr = String.valueOf(num);
-        for(int i=0;i<numStr.length();i++){
-            int n = Integer.parseInt(numStr.substring(i, i+1));
-            if(n<=2){ //这里最后一组只保留xyz不转换，用来做分隔符
-                _char = (char)(n+65+rand(0,3)*10+rand(0,2)*32);
-            }else{
-                _char = (char)(n+65+rand(0,2)*10+rand(0,2)*32);
-            }
-            str += _char;
-        }
-        return str;
+		for(int i=0;i<numStr.length();i++){
+			int n = Integer.parseInt(numStr.substring(i, i+1));
+			if(n<=2){ //这里最后一组只保留xyz不转换，用来做分隔符
+				_char = (char)(n+65+rand(0,3)*10+rand(0,2)*32);
+			}else{
+				_char = (char)(n+65+rand(0,2)*10+rand(0,2)*32);
+			}
+			str += _char;
+		}
+		return str;
 	}
-	
+
 	/**
 	 * 上面的逆运算
 	 * @param str
@@ -585,21 +626,21 @@ public class UploadUtils {
 	private static int s2n(String str){
 		String numStr = "";
 		str = str.toUpperCase();
-		
+
 		for(int i=0;i<str.length();i++){
 			char _char = str.charAt(i);
 			numStr += String.valueOf((((int)_char)-65)%10);
 		}
-        return Integer.parseInt(numStr);
+		return Integer.parseInt(numStr);
 	}
-	
+
 	/**
 	 * 根据文件名返回文件扩展名,小写,包含小数点
 	 */
 	public static String getExtName(String fileName){
 		return fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
 	}
-	
+
 	/**
 	 * 产生随机整数,范围[m,n)
 	 * @return
@@ -607,7 +648,7 @@ public class UploadUtils {
 	private static int rand(int m,int n){
 		return (int)(Math.random()*(n-m)+m);
 	}
-	
+
 	/**
 	 * 获取当前时间的时间戳，单位秒
 	 * @return
@@ -616,8 +657,8 @@ public class UploadUtils {
 		Long time = System.currentTimeMillis()/1000;
 		return time.intValue();
 	}
-	
-	
+
+
 	/**
 	 * close the IO stream.
 	 * @param stream
@@ -629,6 +670,6 @@ public class UploadUtils {
 		} catch (IOException e) {
 		}
 	}
-	
-	
+
+
 }
