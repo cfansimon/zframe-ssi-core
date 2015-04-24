@@ -7,11 +7,11 @@ import org.apache.ibatis.annotations.InsertProvider;
 import org.apache.ibatis.annotations.SelectProvider;
 import org.apache.ibatis.annotations.UpdateProvider;
 
-import com.zlzkj.core.base.SoMap;
+import com.zlzkj.core.base.SOMap;
 import com.zlzkj.core.sql.Row;
 
 /**
- * select数据专用
+ * 通用mapper
  * @author Simon
  *
  */
@@ -23,7 +23,7 @@ public interface SqlMapper {
 	 * @return
 	 */
 	@SelectProvider(type = SqlMapperProvider.class,method = "select")
-	public List<Row> select(SoMap somap);
+	public List<Row> select(SOMap somap);
 	 
 	/**
 	 * 返回单行记录
@@ -31,7 +31,7 @@ public interface SqlMapper {
 	 * @return
 	 */
 	@SelectProvider(type = SqlMapperProvider.class,method = "select")
-	public Row find(SoMap somap);
+	public Row find(SOMap somap);
 	
 	/**
 	 * 返回统计数量
@@ -39,7 +39,7 @@ public interface SqlMapper {
 	 * @return
 	 */
 	@SelectProvider(type = SqlMapperProvider.class,method = "select")
-	public Integer count(SoMap somap);
+	public Integer count(SOMap somap);
 	
 	/**
 	 * 返回特定字段的值
@@ -47,7 +47,7 @@ public interface SqlMapper {
 	 * @return
 	 */
 	@SelectProvider(type = SqlMapperProvider.class,method = "select")
-	public Object getValue(SoMap somap);
+	public Object getValue(SOMap somap);
 	
 	/**
 	 * insert方法
@@ -55,7 +55,7 @@ public interface SqlMapper {
 	 * @return
 	 */
 	@InsertProvider(type = SqlMapperProvider.class,method = "insert")
-	public Integer insert(SoMap somap);
+	public Integer insert(SOMap somap);
 	
 	/**
 	 * update方法
@@ -63,7 +63,7 @@ public interface SqlMapper {
 	 * @return
 	 */
 	@UpdateProvider(type = SqlMapperProvider.class,method = "update")
-	public Integer update(SoMap somap);
+	public Integer update(SOMap somap);
 	
 	/**
 	 * delete方法
@@ -71,5 +71,5 @@ public interface SqlMapper {
 	 * @return
 	 */
 	@DeleteProvider(type = SqlMapperProvider.class,method = "delete")
-	public Integer delete(SoMap somap);
+	public Integer delete(SOMap somap);
 }

@@ -7,7 +7,7 @@ import java.util.HashMap;
  * @author Simon
  *
  */
-public class SoMap extends HashMap<String, Object>{
+public class SOMap extends HashMap<String, Object>{
 
 	private static final long serialVersionUID = -4329907619865094834L;
 

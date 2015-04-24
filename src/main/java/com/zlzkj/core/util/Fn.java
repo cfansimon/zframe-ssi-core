@@ -88,7 +88,7 @@ public class Fn {
 	 */
 	public static String date(int timestamp,String... format){
 		if(timestamp==0){
-			return "暂无数据";
+			return " - "; //无数据
 		}
 		String formatString = "yyyy-MM-dd HH:mm:ss";
 		if(format.length==1){

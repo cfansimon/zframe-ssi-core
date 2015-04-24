@@ -19,7 +19,7 @@ import com.zlzkj.core.util.Fn;
  * sql查询语句生成器，用于简化复杂查询，采用连贯操作方式
  * ;mysql驱动
  * 使用示例:
- * SQLBuilder(User.class).fields("name","sex","dept_name").join(Dept.class,"User.did=Dept.id").where(HashMap).order("name","desc").page(1,10).buildSql();
+ * SQLBuilder(User.class).fields("name","sex","dept_name").join(Dept.class,"User.did=Dept.id").where(HashMap).order("name","desc").page(1,10).selectSql();
  * 说明：
  * 		where的用法：
  * 			Map<String,Object> map = new HashMap<String,Object>();

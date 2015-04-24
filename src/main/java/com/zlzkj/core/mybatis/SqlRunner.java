@@ -7,7 +7,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.zlzkj.core.base.SoMap;
+import com.zlzkj.core.base.SOMap;
 import com.zlzkj.core.sql.Row;
 import com.zlzkj.core.sql.SQLBuilder;
 
@@ -67,6 +67,7 @@ public class SqlRunner {
 		String sql = sqlBuilder.fields("count(*)").where(whereMap).selectSql();
 		return sqlMapper.count(createSOM(sql));
 	}
+	
 	/**
 	 * insert方法
 	 * @param somap
@@ -75,6 +76,7 @@ public class SqlRunner {
 	public Integer insert(String sql,Object... params){
 		return sqlMapper.insert(createSOM(sql,params));
 	}
+	
 	/**
 	 * update方法
 	 * @param somap
@@ -83,6 +85,7 @@ public class SqlRunner {
 	public Integer update(String sql,Object... params){
 		return sqlMapper.update(createSOM(sql,params));
 	}
+	
 	/**
 	 * delete方法
 	 * @param somap
@@ -98,8 +101,8 @@ public class SqlRunner {
 	 * @param params
 	 * @return
 	 */
-	private SoMap createSOM(String sql,Object... params){
-		SoMap somap = new SoMap();
+	private SOMap createSOM(String sql,Object... params){
+		SOMap somap = new SOMap();
 		somap.put("sql", sql);
 		for(Integer i=0;i<params.length;i++){
 			somap.put(i.toString(), params[i]);

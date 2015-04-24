@@ -1,6 +1,6 @@
 package com.zlzkj.core.mybatis;
 
-import com.zlzkj.core.base.SoMap;
+import com.zlzkj.core.base.SOMap;
 
 
 
@@ -11,20 +11,18 @@ import com.zlzkj.core.base.SoMap;
 public class SqlMapperProvider {
 	
 	
-	public String select(SoMap somap) {
+	public String select(SOMap somap) {
         return somap.get("sql").toString();
     }  
-	public String update(SoMap somap) {
+	public String update(SOMap somap) {
 		return somap.get("sql").toString();
 	}  
-	public String insert(SoMap somap) {
+	public String insert(SOMap somap) {
 		return somap.get("sql").toString();
 	}  
-	public String delete(SoMap somap) {
+	public String delete(SOMap somap) {
 		return somap.get("sql").toString();
 	}  
-      
-   
-    
+
     
 }
