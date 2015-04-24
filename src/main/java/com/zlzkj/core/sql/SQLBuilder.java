@@ -107,7 +107,7 @@ public class SQLBuilder{
 			if(getWhereString()==null){
 				setWhereString("WHERE " + parseWhereMap(where,logicType[0]));
 			}else{
-				setWhereString(getWhereString() + logicType + " " + parseWhereMap(where,logicType[0]));
+				setWhereString(getWhereString() + logicType[0] + " " + parseWhereMap(where,logicType[0]));
 			}
 		}
 		return this;
@@ -236,7 +236,7 @@ public class SQLBuilder{
 		for(int i = 0; getJoinString()!=null&&getJoinString().indexOf(" AS " + anotherName)>-1;i++) {
 			anotherName = simpleName+"_"+i;
 		}
-		String sql = "JOIN " + parseTableName(anotherPoClass) 
+		String sql = joinType+" JOIN " + parseTableName(anotherPoClass) 
 				+ " AS " + anotherName +" ON " + joinFieldString + " ";
 		setJoinString(nullToBlank(getJoinString()) + sql); //拼接多个join
 		return this;
@@ -424,6 +424,7 @@ public class SQLBuilder{
 		setOrderString(null);
 		setPageString(null);
 		setJoinString(null);
+		setGroupString(null);
 	}
 
 	/**

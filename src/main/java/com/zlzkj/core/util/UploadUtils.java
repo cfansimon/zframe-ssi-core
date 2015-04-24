@@ -18,12 +18,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.zlzkj.core.util.Fn;
 import com.zlzkj.core.util.SpringContextUtil;
 
 /**
@@ -50,8 +48,15 @@ public class UploadUtils {
 	 * @return
 	 */
 	public static String getWebAppsAbsPath(){
-		String OS = System.getProperty("os.name").toLowerCase();//获取系统名称
+		//获取系统名称
+		String OS = System.getProperty("os.name").toLowerCase();
+		//获取项目所在路径
 		String path = UploadUtils.class.getClassLoader().getResource("").getPath();
+		//在win系统下先把开头的 "/" 去掉
+		if(OS.indexOf("win") >= 0 && path.startsWith(File.separator)){
+			path = path.substring(1);
+		}
+		//获取项目名称
 		String contextPath = SpringContextUtil.getContextPath();
 		//删除末尾的斜杠
 		if(contextPath.endsWith(File.separator)){
@@ -61,6 +66,7 @@ public class UploadUtils {
 		if(!contextPath.startsWith(File.separator) && OS.indexOf("win") < 0){
 			contextPath = File.separator+contextPath;
 		}
+		//去掉 path 后面的 "/WEB-INF/classes/"
 		String excludeString = File.separator+"WEB-INF"+File.separator+"classes"+File.separator;
 		path = path.substring(0, path.length() - excludeString.length());
 		//Maven的run的情况下不包含contextPath
@@ -68,38 +74,10 @@ public class UploadUtils {
 		if(path.endsWith(contextPath)){
 			path = path.substring(0, path.length() - contextPath.length());
 		}
-		if(OS.indexOf("win") >= 0 && path.startsWith("/")){ //在win系统下先把开头的 / 去掉
-			path = path.substring(1);
-		}
+		//替换所有 "%20"为空格" "
+		path = path.replace("%20", " ");
 		return path;
 	}
-	/**
-	 * 根据系统不同转换路径格式
-	 * @param path
-	 * @return
-	 */
-	public static String pathByOs(String path){
-		String OS = System.getProperty("os.name").toLowerCase();//获取系统名称
-		if(OS.indexOf("win") >= 0){
-			path = path.replace("/", "\\");
-		}
-		return path;
-	}
-	
-	public static String serverUrl(HttpServletRequest request, String url) {
-		if (url.indexOf("http://")<0) {
-			String http = "http://" + request.getServerName() //服务器地址  
-					+ ":"   
-					+ request.getServerPort(); //端口号  
-			if (url.startsWith("/")) {
-				url= http+url;
-			}else {
-				url= http+"/"+url;
-			}
-		}
-		return url;
-	}
-	
 
 	/**
 	 * 获取配置文件的值
@@ -122,9 +100,15 @@ public class UploadUtils {
 	//------快捷获取配置值-START-------
 	/**
 	 * 获取文件存储目录根路径,末位不含斜杠
+	 * @param extraPath 额外路径
 	 * @return
 	 */
-	public static String getFileRepository() {
+	public static String getFileRepository(String... extraPath) {
+		if(extraPath.length==0){
+			extraPath = new String[]{""};
+		}else if (!extraPath[0].startsWith("/")) {
+			extraPath[0] = "/" + extraPath[0];
+		}
 		String path = getConfig("FILE_REPOSITORY");
 
 		if (path == null || path.isEmpty()){
@@ -133,7 +117,8 @@ public class UploadUtils {
 		if(getPathType().equals("relative")){ //采用相对路径
 			path = getWebAppsAbsPath() + File.separator + path;
 		}
-		path = path.replace("%20", " ");
+		path = path + extraPath[0];
+		path = pathByOs(path);
 		File dirFile = new File(path);
 		if (!(dirFile.exists() && dirFile.isDirectory())) {
 			//不存在则尝试自动创建
@@ -141,8 +126,7 @@ public class UploadUtils {
 				throw new NullPointerException(path+" folder does not exist");
 			}
 		}
-		
-		return pathByOs(path);
+		return path;
 	}
 
 	/**
@@ -150,6 +134,7 @@ public class UploadUtils {
 	 * @return relative or absolute
 	 */
 	public static String getPathType(){
+
 		String type = getConfig("PATH_TYPE").toLowerCase();
 		if(!(type.equals("relative") || type.equals("absolute"))){
 			type = "relative";
@@ -159,22 +144,24 @@ public class UploadUtils {
 
 	/**
 	 * 获取文件服务器url
-	 * 绝对路径返回"http://"开头,末位不含斜杠；
-	 * 相对路径返回FILE_REPOSITORY
+	 * 绝对路径返回"http://"开头,末位不含斜杠； 
+	 * 相对路径返回"/"开头,加上FILE_REPOSITORY的值
 	 * @return
 	 */
 	public static String getFileServer() {
-		if(UploadUtils.getPathType().equals("relative")){
-			return "/"+Fn.ltrim(UploadUtils.getConfig("FILE_REPOSITORY"),"/");
+		if(getPathType().equals("relative")){
+			String path = Fn.ltrim(getConfig("FILE_REPOSITORY"),"/");
+			return "/"+path;
+		}else {
+			String fileServer = getConfig("FILE_SERVER");
+			if(fileServer.endsWith("/")){
+				fileServer = fileServer.substring(0,fileServer.length()-1);
+			}
+			if(!fileServer.startsWith("http://")){
+				fileServer = "http://" + fileServer;
+			}
+			return fileServer;
 		}
-		String fileServer = getConfig("FILE_SERVER");
-		if(fileServer.endsWith("/")){
-			fileServer = fileServer.substring(0,fileServer.length()-1);
-		}
-		if(!fileServer.startsWith("http://")){
-			fileServer = "http://" + fileServer;
-		}
-		return fileServer;
 	}
 
 	public static String getCrossServer() {
@@ -208,7 +195,18 @@ public class UploadUtils {
 
 
 	//------快捷获取配置值-END--------
-
+	/**
+	 * 根据系统不同转换路径格式
+	 * @param path
+	 * @return
+	 */
+	public static String pathByOs(String path){
+		String OS = System.getProperty("os.name").toLowerCase();//获取系统名称
+		if(OS.indexOf("win") >= 0){
+			path = path.replace("/", "\\");
+		}
+		return path;
+	}
 	/**
 	 * 生成Token,即临时文件名称
 	 * ;正常情况:TEMP_ 文件最后修改时间 + "_" + size的值 + 原扩展名
